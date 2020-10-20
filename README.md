@@ -1,4 +1,4 @@
-#Face Detecor Vision
+# Face Detection with Apple Vision Framework
 Basic face detector with using Vision and VNDetectFaceRectanglesRequest all wrapped into SwiftUI instead of UIKit.
 
  <h3>Screenshots</h3>
