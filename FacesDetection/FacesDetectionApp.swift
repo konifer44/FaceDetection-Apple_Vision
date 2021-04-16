@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct FacesDetectionApp: App {
+    @StateObject var faceDetector = FaceDetector()
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(faceDetector)
         }
     }
 }

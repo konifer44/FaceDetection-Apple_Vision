@@ -4,74 +4,158 @@
 //
 //  Created by Jan Konieczny on 20/10/2020.
 //
-
+import Vision
+import UIKit
 import SwiftUI
+//
+//enum ActiveSheet: Identifiable {
+//    case imagePickerSheet, detectedFacesSheet
+//    var id: Int {
+//        hashValue
+//    }
+//}
 
-enum ActiveSheet: Identifiable {
-    case imagePickerSheet, detectedFacesSheet
-    var id: Int {
-        hashValue
+struct ContentView: View {
+    @EnvironmentObject var faceDetector: FaceDetector
+    @State var inputImage: UIImage?
+    @State var image: Image?
+    @State var imagePickerSheetIsPresented = false
+    
+    
+    var body: some View {
+        ZStack {
+            Background()
+                .blur(radius: (image == nil) ? 0 : 5)
+            VStack{
+                Spacer()
+                if image == nil {
+                    WelcomeView(imagePickerSheetIsPresented: $imagePickerSheetIsPresented)
+                } else {
+                    DetectedFacesImage(image: $image)
+                        .frame(width: 400, alignment: .center)
+                }
+                Spacer()
+                Button(
+                    action: {
+                        imagePickerSheetIsPresented = true
+                    },
+                    label: {
+                        Text("CHOOSE IMAGE")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                    })
+                    .frame(width: 320, height: 55, alignment: .center)
+                    .background(Color(red: 0, green: 200/255, blue: 120/255))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .padding(5)
+            }
+        }
+        
+        .sheet(isPresented: $imagePickerSheetIsPresented, onDismiss: loadImage){
+            ImagePicker(image: $inputImage)
+        }
+    }
+    
+    func loadImage() {
+        guard let inputImage = inputImage else { return }
+        image = Image(uiImage: inputImage)
+        faceDetector.faceDetect(UIImage: inputImage)
+    }}
+
+
+func drawRectangle(on face: VNFaceObservation, size: CGSize) -> CGRect {
+    let rect = CGRect(
+        x: face.boundingBox.minX * size.width,
+        y: ((1 - face.boundingBox.maxY) * size.height),
+        width:  face.boundingBox.width * size.width,
+        height:  face.boundingBox.height * size.height)
+    return rect
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
 }
 
-struct ContentView: View {
-    @State var activeSheet: ActiveSheet?
-    @State var inputImage: UIImage?
-    @State private var boundingBox: CGRect = CGRect()
-    
+
+
+struct WelcomeView: View {
+    @Binding var imagePickerSheetIsPresented: Bool
     var body: some View {
-        NavigationView{
-            
-            VStack {
-                Spacer()
-                Button(action: {
-                    activeSheet = .imagePickerSheet
-                }) {
-                    HStack {
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.title)
-                        Text("Choose Image")
-                            .fontWeight(.semibold)
-                            .font(.title)
-                    }
-                    .frame(width: 300, height: 70, alignment: .center)
-                    .foregroundColor(.white)
-                    .background(Color.green)
-                    .cornerRadius(40)
-                    .padding(.horizontal, 20)
-                }.padding(.bottom, 80)
+        VStack {
+            Spacer()
+            ZStack {
+                Image(systemName: "square.dashed")
+                    .font(Font.system(size: 280, weight: .light))
+                Image(systemName: "face.smiling")
+                    .font(.system(size: 130))
                 
                 
-                Button(action: {
-                    activeSheet = .detectedFacesSheet
-                }) {
-                    HStack {
-                        Image(systemName: "person.3")
-                            .font(.title)
-                        Text("Detected Faces")
-                            .fontWeight(.semibold)
-                            .font(.title)
-                    }
-                    .frame(width: 300, height: 70, alignment: .center)
-                    .foregroundColor(.white)
-                    .background(Color.green)
-                    .cornerRadius(40)
-                    .padding(.horizontal, 20)
-                }.disabled(inputImage == nil)
-                Spacer()
-                
-            }.sheet(item: $activeSheet) { item in
-                switch item {
-                case .imagePickerSheet:
-                    ImagePicker(image: self.$inputImage).onDisappear(perform: loadImage)
-                case .detectedFacesSheet:
-                    VisionView(imageToProcess: inputImage!)
-                }
             }
-            .navigationBarTitle("Faces Detector")
+            .foregroundColor(.white)
+            
+            HStack(spacing: 0) {
+                Text("FACE-")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                Text("DETECT")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color(red: 0, green: 200/255, blue: 120/255))
+            }
+            Spacer()
+            
         }
     }
-    func loadImage() {
-        activeSheet = .detectedFacesSheet
+}
+
+struct DetectedFacesImage: View {
+    @EnvironmentObject var faceDetector: FaceDetector
+    @Binding var image: Image?
+    var body: some View {
+        VStack {
+            HStack{
+                Spacer()
+                Button(action: {
+                    image = nil
+                }, label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(Color.gray.opacity(0.8))
+                        .padding()
+                })
+            }
+            image?
+                .resizable()
+                .scaledToFit()
+                .overlay(
+                    ZStack{
+                        ForEach(faceDetector.detectedFaces, id: \.self) { face in
+                            GeometryReader { geometry in
+                                Rectangle()
+                                    .rotation(.radians(-Double(truncating: face.roll ?? 0)), anchor: .center)
+                                    .path(in: drawRectangle(on: face, size: geometry.size))
+                                    .stroke(Color.yellow, lineWidth: 2.5)
+                            }
+                        }
+                    }
+            )
+            Text("Detected faces: \(faceDetector.detectedFaces.count)")
+                .font(.title)
+                .fontWeight(.bold)
+        }
+    }
+}
+
+struct Background: View {
+    var body: some View {
+        Image("backgroundImage")
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .edgesIgnoringSafeArea(.all)
+        Color(.black).opacity(0.9).edgesIgnoringSafeArea(.all)
     }
 }
