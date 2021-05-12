@@ -18,7 +18,6 @@ func faceDetectWithThrows(UIImage: UIImage) throws -> [VNFaceObservation]{
         }
         return detectedFaces
     }
-    }
 ```  
  <h3>Screenshots</h3>
  <p align="center">
