@@ -1,7 +1,7 @@
 # Face Detection with Apple Vision Framework
 >A basic app thats using Apple Vision Framework.
 
-##Detect faces
+## Detect faces
 
 ```swift
 func faceDetectWithThrows(UIImage: UIImage) throws -> [VNFaceObservation]{
@@ -22,7 +22,7 @@ func faceDetectWithThrows(UIImage: UIImage) throws -> [VNFaceObservation]{
     }
 ```  
 
-##Draw rectangle on face
+## Draw rectangle on face
 
 ```swift
 func drawRectangle(on face: VNFaceObservation, size: CGSize) -> CGRect {
