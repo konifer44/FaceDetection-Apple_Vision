@@ -1,5 +1,5 @@
 # Face Detection with Apple Vision Framework
-A basic app thats using Apple Vision Framework.
+>A basic app thats using Apple Vision Framework.
 
 ```swift
 func faceDetect(UIImage: UIImage){
