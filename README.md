@@ -2,8 +2,8 @@
 >A basic app thats using Apple Vision Framework.
 
 ```swift
-func faceDetect(UIImage: UIImage){
-        guard let CGImageToProcess = UIImage.cgImage else { return }
+func faceDetectWithThrows(UIImage: UIImage) throws -> [VNFaceObservation]{
+        guard let CGImageToProcess = UIImage.cgImage else {throw FaceDetectorError.loadingImageError}
         
         let detectedFacesRequest  = VNDetectFaceRectanglesRequest()
         let requestHandler = VNImageRequestHandler(cgImage: CGImageToProcess)
@@ -13,8 +13,11 @@ func faceDetect(UIImage: UIImage){
             print(error)
         }
         
-        guard let detectedFaces = detectedFacesRequest.results as? [VNFaceObservation] else { return }
-        self.detectedFaces = detectedFaces
+        guard let detectedFaces = detectedFacesRequest.results as? [VNFaceObservation] else {
+            throw FaceDetectorError.noFacesDetected
+        }
+        return detectedFaces
+    }
     }
 ```  
  <h3>Screenshots</h3>
